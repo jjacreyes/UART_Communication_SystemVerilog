@@ -1,0 +1,7 @@
+verilog xil_defaultlib  \
+"../../../../UART_Communication.gen/sources_1/ip/proc_sys_reset_0/proc_sys_reset_0_sim_netlist.v" \
+
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort
