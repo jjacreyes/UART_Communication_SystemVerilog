@@ -27,8 +27,8 @@ module reciever(
 
 
     // Reset logic
-    always_ff @ (posedge clk or posedge rst) begin
-        if (rst) begin
+    always_ff @ (posedge i_clk or posedge i_rst) begin
+        if (i_rst) begin
             current_state <= S_IDLE;
         end
         else begin
@@ -52,10 +52,9 @@ module reciever(
                 else S_READ;
                 end
             S_CHECK_ERROR: next_state = S_DONE;
-            S_DONE: if(rst) next_state = S_IDLE;
+            S_DONE: if(i_rst) next_state = S_IDLE;
             default: next_state = S_IDLE;
         endcase
-
     end
 
     // Output Logic 

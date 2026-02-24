@@ -73,6 +73,14 @@ module uart_top #(
     // TODO: Create the receiver and transmitter instances here
     // For transmitter: use signals clk, rst, tick_16x_en, transmit, i_tx_data, o_uart_tx_out
     // For receiver:    use signals clk, rst, tick_16x_en, o_frame_error, o_rx_data, i_uart_rx_in
+    reciever (
+        .i_clk(i_clk),
+        .i_rst(rst),
+        .i_tick_16x_en(tick_16x_en),
+        .i_uart_rx_in(i_uart_rx_in),
+        .o_rx_data(o_rx_data),
+        .o_frame_error(o_frame_error)
+    );
 
 
     // TODO: Instantiate ILA and add connections
