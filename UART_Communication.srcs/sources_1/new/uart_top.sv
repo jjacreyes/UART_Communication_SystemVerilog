@@ -82,7 +82,15 @@ module uart_top #(
         .o_frame_error(o_frame_error)
     );
 
-
+    transmitter tx (
+        .i_clk(clk),
+        .i_rst(rst),
+        .i_tick_16x_en(tick_16x_en),
+        .i_transmit(transmit),
+        .i_tx_data(i_tx_data),
+        .o_uart_tx_out(o_uart_tx_out)
+    );
+    
     // TODO: Instantiate ILA and add connections
 
 

@@ -14,14 +14,14 @@ module transmitter(
 
     logic [4:0] baud_counter; // bits hold for 16 baud ticks
     logic [2:0] bit_counter; 
-    logic [7:0] shit_reg; // temp hold for input data
+    logic [7:0] shift_reg; // temp hold for input data
 
     typedef enum logic [2:0] {
-        S_IDLE = 3'b000;
-        S_START = 3'b001;
-        S_DATA = 3'b010;
-        S_DONE = 3'b011;
-    } state_t
+        S_IDLE = 3'b000,
+        S_START = 3'b001,
+        S_DATA = 3'b010,
+        S_DONE = 3'b011
+    } state_t;
 
     state_t current_state, next_state;
 
@@ -70,7 +70,7 @@ module transmitter(
                     else baud_counter <= baud_counter + 1;
                 end
                 S_DATA: begin
-                    o_uart_tx_out <= shift_reg[0] // Output LSB -> Shift bits down for shift_reg
+                    o_uart_tx_out <= shift_reg[0]; // Output LSB -> Shift bits down for shift_reg
                     shift_reg <= {1'b1, shift_reg[7:1]}; // Add HIGH bit for idle state
 
                     if (baud_counter == 5'd15) baud_counter <= 5'd0; // 16 tick hold
@@ -78,20 +78,10 @@ module transmitter(
                     bit_counter <= bit_counter + 1;
                 end
                 S_DONE: begin
-                    o_uart_tx <= shift_reg[0]; // Output new LSB -> Should be HIGH for IDLE
+                    o_uart_tx_out <= shift_reg[0]; // Output new LSB -> Should be HIGH for IDLE
                 end
             endcase 
         end
-
-
-
-
-
-
     end
-
-
-
-
 
 endmodule
