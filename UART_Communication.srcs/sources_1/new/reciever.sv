@@ -47,7 +47,6 @@ module reciever(
         endcase
     end
 
-
     // Output Logic
     always_ff @ (posedge i_clk) begin
         if (i_rst) begin
@@ -65,7 +64,7 @@ module reciever(
                     bit_counter <= 3'd0;
                 end
                 S_START: begin
-                    if (baud_counter == 7) baud_counter <= 4'd0;
+                    if (baud_counter == 4'd7) baud_counter <= 4'd0;
                     else baud_counter <= baud_counter +1;
                 end
                 S_READ: begin

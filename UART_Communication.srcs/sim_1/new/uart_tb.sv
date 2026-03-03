@@ -6,7 +6,6 @@ module uart_tb();
     localparam int unsigned CLOCK_PERIOD = 10; // in ns for 100MHz
 
     logic sys_clk;
-    logic sys_baud;
     logic sys_rst;
 
     // UART Receiver signals
@@ -31,7 +30,6 @@ module uart_tb();
 
     // Generate the testbench clock
     always #(CLOCK_PERIOD/2) sys_clk = ~sys_clk;
-    always #(BAUD_PERIOD/2) sys_baud = ~sys_baud;
 
     // Instantiate the UART DUT
     uart_top dut (
