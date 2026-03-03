@@ -6,6 +6,7 @@ module uart_tb();
     localparam int unsigned CLOCK_PERIOD = 10; // in ns for 100MHz
 
     logic sys_clk;
+    logic sys_baud;
     logic sys_rst;
 
     // UART Receiver signals
@@ -30,6 +31,7 @@ module uart_tb();
 
     // Generate the testbench clock
     always #(CLOCK_PERIOD/2) sys_clk = ~sys_clk;
+    always #(BAUD_PERIOD/2) sys_baud = ~sys_baud;
 
     // Instantiate the UART DUT
     uart_top dut (
@@ -68,7 +70,6 @@ module uart_tb();
         // In simple terms, the clock generator needs some time to stabilize before we start sending data.
         wait (dut.clk_gen.locked);
         #500;
-
 
         // =====================================
         // UART Receiver test case
@@ -141,9 +142,7 @@ module uart_tb();
 
         // Keep the channel idle (logic high)
         uart_rx_in <= 1'b1;
-
     endtask
-
 
     // Task to simulate receiving a byte over the UART TX line
     // This task will monitor the uart_tx_out line and reconstruct the byte being transmitted
