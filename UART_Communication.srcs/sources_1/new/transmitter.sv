@@ -39,11 +39,11 @@ module transmitter(
     always_comb begin
         next_state = current_state;
         case(current_state)
-            S_IDLE: if (transmit_btn) next_state = S_START;
+            S_IDLE: if (i_transmit) next_state = S_START;
             S_START: if (baud_counter == 5'd15) next_state = S_DATA; // Hold start - bit for 16 ticks
-            S_DATA: if (i_tick_16x_en && baud_counter == 5'd15 && bit_counter == 3'd7) next_state = S_STOP; // Serialize complete 8 - bits
+            S_DATA: if (i_tick_16x_en && baud_counter == 5'd15 && bit_counter == 3'd7) next_state = S_DONE; // Serialize complete 8 - bits
             S_DONE: next_state = S_IDLE;
-            default: S_IDLE;
+            default: next_state = S_IDLE;
         endcase
     end
 
@@ -63,17 +63,20 @@ module transmitter(
                     bit_counter <= 3'd0;
                 end
                 S_START: begin
-                    o_uart_tx_out <= 1'b1;
-                    shift_reg <= i_uart_rx_in; 
+                    o_uart_tx_out <= 1'b0; // LOW start bit
+                    shift_reg <= i_tx_data; 
 
                     if (baud_counter == 4'd15) baud_counter <= 4'd0; // 16 tick hold
                     else baud_counter <= baud_counter + 1;
                 end
                 S_DATA: begin
                     o_uart_tx_out <= shift_reg[0]; // Output LSB -> Shift bits down for shift_reg
-                    shift_reg <= {1'b1, shift_reg[7:1]}; // Add HIGH bit for idle state
 
-                    if (baud_counter == 5'd15) baud_counter <= 5'd0; // 16 tick hold
+                    if (baud_counter == 5'd15) begin
+                        shift_reg <= {1'b1, shift_reg[7:1]}; // Add HIGH bit for idle state
+                        baud_counter <= 5'd0; // 16 tick hold
+                    end
+
                     else baud_counter <= baud_counter + 1;
                     bit_counter <= bit_counter + 1;
                 end

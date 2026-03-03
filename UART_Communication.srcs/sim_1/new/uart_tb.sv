@@ -14,10 +14,10 @@ module uart_tb();
     logic frame_error;
 
     // UART Transmitter signals
- /*   logic transmit_btn;
+    logic transmit_btn;
     logic [7:0] tx_data;
     logic uart_tx_out;
-    logic transmit;*/
+    logic transmit;
 
 
     // Testbench Receiver simulation signals
@@ -56,9 +56,9 @@ module uart_tb();
         // Normal reset procedure
         sys_clk = 0;
         sys_rst = 1;
-       // tx_data = 0;
-       // transmit_btn = 0;
-       // transmit = 0;
+        tx_data = 0;
+        transmit_btn = 0;
+        transmit = 0;
         uart_rx_in = 1;
 
         #100;
@@ -90,17 +90,18 @@ module uart_tb();
         // Set the data to be transmitted...
 
         // Wait some time...
-     //   #100;
+       #100;
 
 
         // Assert the internal transmit signal to start transmission
-      //  transmit = 1;
-        // Set other variables...
+        transmit = 1;
+        #100
+        transmit = 0;
 
-
+        
 
         // Write a task to capture the data from uart_tx_out...
-        // receive_uart_byte();
+        receive_uart_byte();
 
     end
 
@@ -144,12 +145,12 @@ module uart_tb();
 
     // Task to simulate receiving a byte over the UART TX line
     // This task will monitor the uart_tx_out line and reconstruct the byte being transmitted
-   /* task automatic receive_uart_byte();
+    task automatic receive_uart_byte();
         received_data = 0;
         // TODO: Implement this task to capture data from uart_tx_out
         // You can store it in the received_data variable
         
-    endtask*/
+    endtask
 
 
 endmodule
