@@ -16,7 +16,7 @@ module reciever(
     typedef enum logic [2:0] {
         S_IDLE = 3'b000,
         S_START = 3'b001,
-        S_DATA = 3'b010,
+        S_READ = 3'b010,
         S_STOP = 3'b011,
         S_DONE = 3'b100
     } state_t;
@@ -44,11 +44,12 @@ module reciever(
             S_STOP: if (i_tick_16x_en && baud_counter == 15) next_state = S_DONE; // Reads last bit to ensure stop + error frame
             S_DONE: next_state = S_IDLE;
             default: next_state = S_IDLE;
+        endcase
     end
 
 
     // Output Logic
-    always_ff @ (posedge i_sys_clk) begin
+    always_ff @ (posedge i_clk) begin
         if (i_rst) begin
             baud_counter <= 4'd0;
             bit_counter <= 3'd0;
@@ -71,7 +72,7 @@ module reciever(
                     if (baud_counter == 15) begin // Reset baud counter for each bit
                         baud_counter <= 4'd0;
                         bit_counter <= bit_counter + 1;
-                        shift_reg <= {i_uart_rx_in, shift_reg[7:1]} // testing the shifting operation
+                        shift_reg <= {i_uart_rx_in, shift_reg[7:1]}; // testing the shifting operation
                     end
                     else begin
                         baud_counter <= baud_counter + 1;
