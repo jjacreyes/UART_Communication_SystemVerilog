@@ -61,8 +61,4 @@ module reciever_tb();
     end
     
 
-
-
-
-
 endmodule

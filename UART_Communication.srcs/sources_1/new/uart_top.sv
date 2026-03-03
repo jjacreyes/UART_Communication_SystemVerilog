@@ -55,7 +55,7 @@ module uart_top #(
     );
 
     // Baud rate generator module
-    baud_gen #(
+    baud_generator #(
         .F_CLK_HZ(F_CLK_HZ),
         .BAUD(BAUD),
         .OVERSAMPLE(OVERSAMPLE)
@@ -73,8 +73,8 @@ module uart_top #(
     // TODO: Create the receiver and transmitter instances here
     // For transmitter: use signals clk, rst, tick_16x_en, transmit, i_tx_data, o_uart_tx_out
     // For receiver:    use signals clk, rst, tick_16x_en, o_frame_error, o_rx_data, i_uart_rx_in
-    reciever (
-        .i_clk(i_clk),
+    reciever rx (
+        .i_clk(clk),
         .i_rst(rst),
         .i_tick_16x_en(tick_16x_en),
         .i_uart_rx_in(i_uart_rx_in),
