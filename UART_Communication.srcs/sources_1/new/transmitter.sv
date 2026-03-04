@@ -16,6 +16,10 @@ module transmitter(
     logic [2:0] bit_counter; 
     logic [7:0] shift_reg; // temp hold for input data
 
+    // posedge detector signals
+    logic transmit_reg;
+    logic transmit_btn;
+
     typedef enum logic [2:0] {
         S_IDLE = 3'b000,
         S_START = 3'b001,
@@ -35,11 +39,21 @@ module transmitter(
         end
     end
 
+    // Posedge Detector for i_transmit
+    always_ff @ (posedge i_clk) begin
+        if (i_rst) transmit_reg <= 1'b0;
+        else transmit_reg <= i_transmit; // clock cycle delay for button press
+    end
+
+    assign transmit_btn = i_transmit && !i_transmit; // difference between from delay
+
+
+
     // Next State Logic
     always_comb begin
         next_state = current_state;
         case(current_state)
-            S_IDLE: if (i_transmit) next_state = S_START;
+            S_IDLE: if (transmit_btn) next_state = S_START;
             S_START: if (baud_counter == 5'd15) next_state = S_DATA; // Hold start - bit for 16 ticks
             S_DATA: if (i_tick_16x_en && baud_counter == 5'd15 && bit_counter == 3'd7) next_state = S_DONE; // Serialize complete 8 - bits
             S_DONE: next_state = S_IDLE;
