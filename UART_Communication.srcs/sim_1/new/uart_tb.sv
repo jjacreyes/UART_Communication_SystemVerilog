@@ -18,6 +18,7 @@ module uart_tb();
     logic [7:0] tx_data;
     logic uart_tx_out;
     logic transmit;
+    logic [7:0] received_data; // data from TX line
 
 
     // Testbench Receiver simulation signals
@@ -66,7 +67,7 @@ module uart_tb();
 
         // Since uart_top is being simulated, we need to wait for the clock generator to lock.
         // In simple terms, the clock generator needs some time to stabilize before we start sending data.
-        wait (dut.clk_gen.locked);
+       // wait (dut.clk_gen.locked);
         #500;
 
         // =====================================
@@ -91,17 +92,18 @@ module uart_tb();
 
         // Wait some time...
        #100;
-
-
         // Assert the internal transmit signal to start transmission
+        tx_data = 8'h41; // Testing with ASCII 'A' 
+        transmit_btn = 1;
         transmit = 1;
-        #100
-        transmit = 0;
-
+        #5_100_000;
         
-
         // Write a task to capture the data from uart_tx_out...
         receive_uart_byte();
+        
+        transmit_btn = 0;
+        transmit = 0;
+        #2_000_000;
 
     end
 
@@ -145,11 +147,22 @@ module uart_tb();
 
     // Task to simulate receiving a byte over the UART TX line
     // This task will monitor the uart_tx_out line and reconstruct the byte being transmitted
-    task automatic receive_uart_byte();
-        received_data = 0;
+    // You can store it in the received_data variable
+    task automatic receive_uart_byte();    
         // TODO: Implement this task to capture data from uart_tx_out
-        // You can store it in the received_data variable
-        
+        logic [7:0] temp_reg;
+        wait (uart_tx_out == 1'b1); // Let IDLE stabilize
+
+        wait (uart_tx_out == 1'b0); // Wait for LOW (start) bit
+        #(BAUD_PERIOD + (BAUD_PERIOD/4));
+
+        for (int i = 0; i < 8; i++) begin
+            temp_reg[i] = uart_tx_out; // deserializes data
+            #(BAUD_PERIOD);
+        end
+
+        received_data = temp_reg;
+
     endtask
 
 

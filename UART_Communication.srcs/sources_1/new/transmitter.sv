@@ -10,9 +10,8 @@ module transmitter(
     );
     // Considerations: LSB sent first (SW0 on FPGA)
     // include rising edge detector for transmit button
-    //
 
-    logic [4:0] baud_counter; // bits hold for 16 baud ticks
+    logic [3:0] baud_counter; // bits hold for 16 baud ticks : Counts to 15 to include initial tick
     logic [2:0] bit_counter; 
     logic [7:0] shift_reg; // temp hold for input data
 
@@ -24,19 +23,16 @@ module transmitter(
         S_IDLE = 3'b000,
         S_START = 3'b001,
         S_DATA = 3'b010,
-        S_DONE = 3'b011
+        S_STOP = 3'b011,
+        S_DONE = 3'b100
     } state_t;
 
     state_t current_state, next_state;
 
     // Reset logic
     always_ff @ (posedge i_clk or posedge i_rst) begin
-        if (i_rst) begin
-            current_state <= S_IDLE;
-        end
-        else begin
-            current_state <= next_state;
-        end
+        if (i_rst) current_state <= S_IDLE;
+        else current_state <= next_state;
     end
 
     // Posedge Detector for i_transmit
@@ -44,18 +40,16 @@ module transmitter(
         if (i_rst) transmit_reg <= 1'b0;
         else transmit_reg <= i_transmit; // clock cycle delay for button press
     end
-
-    assign transmit_btn = i_transmit && !i_transmit; // difference between from delay
-
-
+    assign transmit_btn = i_transmit && !transmit_reg;// difference between from delay
 
     // Next State Logic
     always_comb begin
         next_state = current_state;
         case(current_state)
             S_IDLE: if (transmit_btn) next_state = S_START;
-            S_START: if (baud_counter == 5'd15) next_state = S_DATA; // Hold start - bit for 16 ticks
-            S_DATA: if (i_tick_16x_en && baud_counter == 5'd15 && bit_counter == 3'd7) next_state = S_DONE; // Serialize complete 8 - bits
+            S_START: if (i_tick_16x_en && baud_counter == 4'd15) next_state = S_DATA; // Hold start - bit for 16 ticks
+            S_DATA: if (i_tick_16x_en && baud_counter == 4'd15 && bit_counter == 3'd7) next_state = S_STOP; // Serialize complete 8 - bits
+            S_STOP: if (i_tick_16x_en && baud_counter == 4'd15) next_state = S_DONE; // Added this for stop bit
             S_DONE: next_state = S_IDLE;
             default: next_state = S_IDLE;
         endcase
@@ -66,39 +60,48 @@ module transmitter(
         if (i_rst) begin
             baud_counter <= 4'd0;
             bit_counter <= 4'd0;
-            o_uart_tx_out <= 1'b0; 
+            o_uart_tx_out <= 1'b1; // RST To IDLE state
             shift_reg <= 8'b0;
         end
-
-        else if (i_tick_16x_en) begin
-            case (current_state)
-                S_IDLE: begin
-                    baud_counter <= 4'd0;
-                    bit_counter <= 3'd0;
-                end
-                S_START: begin
-                    o_uart_tx_out <= 1'b0; // LOW start bit
-                    shift_reg <= i_tx_data; 
-
+        case (current_state)
+            S_IDLE: begin
+                o_uart_tx_out <= 1'b1; // keeps output high for IDLE
+                baud_counter <= 4'd0;
+                bit_counter <= 3'd0;
+                if (transmit_btn) shift_reg <= i_tx_data; 
+            end
+            S_START: begin
+                o_uart_tx_out <= 1'b0; // LOW start bit
+                if (i_tick_16x_en) begin
                     if (baud_counter == 4'd15) baud_counter <= 4'd0; // 16 tick hold
                     else baud_counter <= baud_counter + 1;
                 end
-                S_DATA: begin
-                    o_uart_tx_out <= shift_reg[0]; // Output LSB -> Shift bits down for shift_reg
+            end
 
-                    if (baud_counter == 5'd15) begin
+            S_DATA: begin
+                o_uart_tx_out <= shift_reg[0]; // Output LSB -> Shift bits down for shift_reg
+                if (i_tick_16x_en) begin
+                    if (baud_counter == 4'd15) begin
+                        baud_counter <= 4'd0; // 16 tick hold
+                        bit_counter <= bit_counter + 1;
                         shift_reg <= {1'b1, shift_reg[7:1]}; // Add HIGH bit for idle state
-                        baud_counter <= 5'd0; // 16 tick hold
                     end
-
                     else baud_counter <= baud_counter + 1;
-                    bit_counter <= bit_counter + 1;
                 end
-                S_DONE: begin
-                    o_uart_tx_out <= shift_reg[0]; // Output new LSB -> Should be HIGH for IDLE
+            end
+
+            S_STOP: begin
+                o_uart_tx_out <= 1'b1; // HIGH Bit for STOP bit
+                if (i_tick_16x_en) begin
+                    if (baud_counter == 4'd15) baud_counter <= 4'd0;
+                    else baud_counter <= baud_counter + 1;
                 end
-            endcase 
-        end
+            end
+
+            S_DONE: begin
+                o_uart_tx_out <= 1'b1; // Keep Output HIGH
+            end
+        endcase 
     end
 
 endmodule
